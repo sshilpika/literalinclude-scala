@@ -225,9 +225,9 @@ trait LiteralIncludeService extends HttpService {
         val writer1 = new PrintWriter(new File("test1.txt" ))
         writer1.write(s1)
         writer1.close()
-        io.Source.fromFile("test.txt").getLines()
+        io.Source.fromFile("test.txt").getLines().mkString("\n")
       }
-      r.toString
+      r("content").toString
 
     })
 
@@ -299,23 +299,9 @@ trait LiteralIncludeService extends HttpService {
 
         }
       }~
-        path("languages") {
-          get{
-
-            parameters('user, 'repo) { (user, repo) =>
-              onComplete(githubCall(user,repo,"languages")) {
-                case Success(value) => respondWithMediaType(`application/json`) {
-                  complete(value)
-                }
-               // case Failure(ex)    => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
-              }
-            }
-
-          }
-        }~
       path("loc") {
         get{
-          respondWithMediaType(`application/json`)  {
+          respondWithMediaType(`text/plain`)  {
           //parameters('user, 'repo) { (user, repo) =>
             onComplete(githubCallToContents("sshilpika","metrics-test","src/main/scala/Boot.scala")) {
               case Success(value) =>  //respondWithMediaType(`application/json`)  {
@@ -337,39 +323,51 @@ trait LiteralIncludeService extends HttpService {
 
 
       }~
-      path("literalinclude/github/code") {
+      path("literalinclude" ~Slash~ "github" ~Slash~ "code") {
         get{
-          respondWithMediaType(`text/html`)  {
-            parameters('user, 'repo) { (user, repo) =>
-            onComplete(githubCallToContents(user, repo , "/src/main/scala/Rational.scala")) {
-              case Success(value) =>  //respondWithMediaType(`application/json`)  {
-                complete(value)
+          respondWithMediaType(`text/plain`)  {
+            parameters('user, 'repo, 'path) { (user, repo, path) =>
+              //http://localhost:5000/literalinclude/github/code?user=LoyolaChicagoCode&repo=scala-tdd-fundamentals
+              onComplete(githubCallToContents(user, repo , path)) {
+                case Success(value) =>  //respondWithMediaType(`application/json`)  {
+                  complete(value)
+                // }
+                //case Failure(ex)    => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
+                // complete{
+
+                /*(x:Future[DefaultJsonProtocol]) => {
+                    x onSuccess {
+                      case _ => _
+                    }
+
+
+                  } *///}
               }
-              //case Failure(ex)    => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
-              // complete{
-
-              /*(x:Future[DefaultJsonProtocol]) => {
-                  x onSuccess {
-                    case _ => _
-                  }
-
-
-                } *///}
             }
           }
         }
 
 
-      }~
-      path("repoLOC") {
+      }~path("literalinclude" ~Slash~ "github" ~Slash~ "code"~Slash~ Segment~Slash~ Segment ~RestPath) {(user,repo, path)=>{
         get{
-          respondWithMediaType(`application/json`)  {
-            parameters('user, 'repo, 'sha) { (user, repo, sha) =>
-            onComplete(githubCallForFilePaths(user, repo, sha)) {
-              //"sshilpika","metrics-test","8618701938133258cbaf59e6dd223f7ac8865bb2")) {
-              case Success(value) =>
-                complete(value)
-            }
+          respondWithMediaType(`text/plain`)  {
+            //parameters('user, 'repo, 'path) { (user, repo, path) =>
+              //http://localhost:5000/literalinclude/github/code?user=LoyolaChicagoCode&repo=scala-tdd-fundamentals
+              onComplete(githubCallToContents(user, repo, path.toString)) {
+                case Success(value) =>  //respondWithMediaType(`application/json`)  {
+                  complete(value)
+                // }
+                //case Failure(ex)    => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
+                // complete{
+
+                /*(x:Future[DefaultJsonProtocol]) => {
+                    x onSuccess {
+                      case _ => _
+                    }
+
+
+                  } *///}
+              }
             }
           }
         }

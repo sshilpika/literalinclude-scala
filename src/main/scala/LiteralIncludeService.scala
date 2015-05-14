@@ -64,6 +64,8 @@ trait LiteralIncludeService extends HttpService {
           lis.append(iteratorStr.map(x => if(x.length>= dedent) x.substring(dedent)).mkString("\n"))
         }else {lis.append("")}
       }
+      if(sb.length == 0)
+        sb.append("Please enter a valid Url in the form /github/code/:user/:repo/:branch/path?lines=#L1-#L2&dedent=#Num")
       sb.mkString
     })
     res2
@@ -83,8 +85,16 @@ trait LiteralIncludeService extends HttpService {
 
   val myRoute =
     pathEndOrSingleSlash {
-
-      complete("Welcome to the Awesome Literal Include Service")
+      respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
+        complete {
+          <html>
+            <body>
+              <h3>Welcome to the Awesome Literal Include Service!</h3>
+              <h3>Please enter a valid Url in the form<i>/github/code/:user/:repo/:branch/path?lines=#L1-#L2&amp;dedent=#Num</i></h3>
+            </body>
+          </html>
+        }
+      }
 
     } ~
       path("commits") {

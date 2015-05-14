@@ -1,10 +1,10 @@
-package luc.literalinclude
+package luc.literalinclude.scala
 
 /**
  * Created by sshilpika on 4/6/15.
  */
 
-package object scala {
+object `package` {
   val homeDir = System.getProperty("user.home")
-  val accessToken = io.Source.fromFile(homeDir + "/githubAccessToken").getLines.next()
+  val accessToken = scala.io.Source.fromFile(homeDir + "/githubAccessToken").getLines.next()
 }

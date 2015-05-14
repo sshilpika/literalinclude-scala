@@ -37,9 +37,8 @@ trait LiteralIncludeService extends HttpService {
     response2
   }
 
-  def githubCallForContent(user: String, repo: String, filePath: String, linesArr: Array[String], dedent:Int*): Future[String] = {
-    val contents: Future[HttpResponse] = getGithubContent(user, repo, filePath)
-
+  def githubCallForContent(user: String, repo: String, branch: String, filePath: String, linesArr: Array[String], dedent:Int): Future[String] = {
+    val contents: Future[HttpResponse] = getGithubContent(user, repo, branch, filePath)
 
     val res2 = contents.map(x1 => {
       val sb = new StringBuilder("")
@@ -50,36 +49,33 @@ trait LiteralIncludeService extends HttpService {
           val writer = new PrintWriter(new File("store.txt"))
           writer.write(s)
           writer.close()
+
           val iteratorStr: Iterator[String] = if (linesArr.length == 2) {
             if (linesArr(0).isEmpty) {
               io.Source.fromFile("store.txt").getLines().take(linesArr(1).toInt)
             } else {
-              io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt, linesArr(1).toInt + 1)
+              io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt-1, linesArr(1).toInt)
             }
           } else if (linesArr.length == 1) {
             io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
           } else {
             io.Source.fromFile("store.txt").getLines()
           }
-          if(dedent.isEmpty)
-            lis.append(iteratorStr.mkString("\n"))
-          else
-            lis.append(iteratorStr.map(x => if(x.length>= dedent(0)) x.substring(dedent(0))).mkString("\n"))
-        }else lis.append("")
+          lis.append(iteratorStr.map(x => if(x.length>= dedent) x.substring(dedent)).mkString("\n"))
+        }else {lis.append("")}
       }
       sb.mkString
     })
-
     res2
 
   }
 
 
-  def getGithubContent(user: String, repo: String, filePath: String): Future[HttpResponse] = {
+  def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
     implicit val actor = ActorSystem("githubCallForContent")
     implicit val timeout = Timeout(15.seconds)
     val contents = {
-      (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath)).mapTo[HttpResponse]
+      (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath+"?ref="+branch)).mapTo[HttpResponse]
     }
     contents
   }
@@ -112,13 +108,13 @@ trait LiteralIncludeService extends HttpService {
 
       }
     } ~ // with lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ RestPath) { (user, repo, path) => {
+      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~Segment~ Slash ~RestPath) { (user, repo, branch, path) => {
       get {
         respondWithMediaType(`text/plain`) {
-          parameters('lines, 'dedent) { (lines, dedent) =>
+          parameters('lines ? "1", 'dedent ? "0") { (lines, dedent) =>
             val linesArr = lines.split("-")
             if (linesArr.length >0) {
-              onComplete(githubCallForContent(user, repo, path.toString, linesArr,dedent.toInt)) {
+              onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr,dedent.toInt)) {
                 case Success(value) =>
                   complete(value)
               }
@@ -129,42 +125,11 @@ trait LiteralIncludeService extends HttpService {
         }
       }
     }
-    } ~ // with lines and no dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ RestPath) { (user, repo, path) => {
-        get {
-          respondWithMediaType(`text/plain`) {
-            parameters('lines) { (lines) =>
-              val linesArr = lines.split("-")
-              if (linesArr.length >0) {
-                onComplete(githubCallForContent(user, repo, path.toString, linesArr)) {
-                  case Success(value) =>
-                    complete(value)
-                }
-              } else {
-                complete("Illegal line selection, enter in the format L1-L2")
-              }
-            }
-          }
-        }
-      }
-      } ~ // with only dedent and no lines
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ RestPath) { (user, repo, path) => {
-        get {
-          respondWithMediaType(`text/plain`) {
-            parameters('dedent) { (dedent) =>
-              onComplete(githubCallForContent(user, repo, path.toString, Array.empty,dedent.toInt)) {
-                case Success(value) =>
-                  complete(value)
-              }
-            }
-          }
-        }
-      }
-      } ~ // without lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ RestPath) { (user, repo, path) => {
+    } ~  // without lines and dedent
+      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~Segment~ RestPath) { (user, repo, branch, path) => {
       get {
         respondWithMediaType(`text/plain`) {
-          onComplete(githubCallForContent(user, repo, path.toString, Array.empty)) {
+          onComplete(githubCallForContent(user, repo, branch, path.toString, Array.empty,0)) {
             case Success(value) =>
               complete(value)
           }

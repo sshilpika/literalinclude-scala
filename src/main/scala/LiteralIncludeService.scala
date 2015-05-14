@@ -54,7 +54,10 @@ trait LiteralIncludeService extends HttpService {
             if (linesArr(0).isEmpty) {
               io.Source.fromFile("store.txt").getLines().take(linesArr(1).toInt)
             } else {
-              io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt-1, linesArr(1).toInt)
+              if(linesArr(0).toInt < linesArr(1).toInt)
+                io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt-1, linesArr(1).toInt)
+              else
+                Iterator("Line arguments L1 should be greater than L2")
             }
           } else if (linesArr.length == 1) {
             io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)

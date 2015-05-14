@@ -50,19 +50,17 @@ trait LiteralIncludeService extends HttpService {
           writer.write(s)
           writer.close()
 
-          val iteratorStr: Iterator[String] = if (linesArr.length == 2) {
-            if (linesArr(0).isEmpty) {
-              io.Source.fromFile("store.txt").getLines().take(linesArr(1).toInt)
-            } else {
-              if(linesArr(0).toInt < linesArr(1).toInt)
-                io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt-1, linesArr(1).toInt)
-              else
-                Iterator("Line arguments L1 should be greater than L2")
-            }
-          } else if (linesArr.length == 1) {
-            io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
-          } else {
-            io.Source.fromFile("store.txt").getLines()
+          val iteratorStr: Iterator[String] = linesArr.length match {
+            case 2 => if (linesArr(0).isEmpty) {
+                        io.Source.fromFile("store.txt").getLines().take(linesArr(1).toInt)
+                      } else {
+                        if(linesArr(0).toInt < linesArr(1).toInt)
+                          io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt-1, linesArr(1).toInt)
+                        else
+                          Iterator("Line arguments L1 should be greater than L2")
+                      }
+            case 1 =>  io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
+            case _ =>  io.Source.fromFile("store.txt").getLines()
           }
           lis.append(iteratorStr.map(x => if(x.length>= dedent) x.substring(dedent)).mkString("\n"))
         }else {lis.append("")}
@@ -94,6 +92,7 @@ trait LiteralIncludeService extends HttpService {
             <body>
               <h3>Welcome to the Awesome Literal Include Service!</h3>
               <h3>Please enter a valid Url in the form<i>/github/code/:user/:repo/:branch/path?lines=#L1-#L2&amp;dedent=#Num</i></h3>
+              <h4>lines and dedent are optional</h4>
             </body>
           </html>
         }

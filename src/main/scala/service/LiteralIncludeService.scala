@@ -1,4 +1,4 @@
-package service
+package luc.literalinclude.service
 
 /**
  * Created by sshilpika on 3/8/15.

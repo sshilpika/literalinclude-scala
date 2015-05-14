@@ -1,13 +1,15 @@
-package luc.literalinclude.scala
+package service
+
 /**
  * Created by sshilpika on 5/13/15.
  */
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
-import spray.can.Http
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.can.Http
+
 import scala.concurrent.duration._
 import scala.util.Properties
 

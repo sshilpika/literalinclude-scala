@@ -1,27 +1,26 @@
-package luc.literalinclude.scala
+package service
+
 /**
  * Created by sshilpika on 3/8/15.
  */
 
-import akka.util.Timeout
-import spray.httpx.SprayJsonSupport
-import scala.{Predef, StringBuilder}
-import scala.util._
-import scala.concurrent.ExecutionContext.Implicits._
+import java.io._
+
 import akka.actor._
-import spray.routing._
-import spray.http._
-import MediaTypes._
-import spray.json._
-import scala.concurrent.Future
-import spray.can.Http
 import akka.io.IO
 import akka.pattern.ask
-import spray.http._
-import scala.concurrent.duration._
-import spray.json.DefaultJsonProtocol
+import akka.util.Timeout
 import org.apache.commons.codec.binary.Base64
-import java.io._
+import spray.can.Http
+import spray.http.MediaTypes._
+import spray.http._
+import spray.json._
+import spray.routing._
+
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util._
 
 trait LiteralIncludeService extends HttpService {
 

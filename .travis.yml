@@ -1,3 +1,5 @@
 language: scala
 scala: 2.11.5
-
+deploy:
+  provider: heroku
+  api_key: "4dec401c-7c69-4f1b-8dad-41bc3294b92b"

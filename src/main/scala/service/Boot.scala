@@ -9,7 +9,6 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import spray.can.Http
-
 import scala.concurrent.duration._
 import scala.util.Properties
 

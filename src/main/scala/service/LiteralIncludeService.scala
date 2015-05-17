@@ -5,7 +5,6 @@ package luc.literalinclude.service
  */
 
 import java.io._
-
 import akka.actor._
 import akka.io.IO
 import akka.pattern.ask
@@ -16,7 +15,6 @@ import spray.http.MediaTypes._
 import spray.http._
 import spray.json._
 import spray.routing._
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -30,18 +28,15 @@ trait LiteralIncludeService extends HttpService {
   def githubCall(user: String, repo: String, responseType: String): Future[HttpResponse] = {
     implicit val actor = ActorSystem("githubCall")
     implicit val timeout = Timeout(5.seconds)
-    val response2: Future[HttpResponse] =
-      (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/" + responseType)).mapTo[HttpResponse]
+    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/" + responseType)).mapTo[HttpResponse]
 
-    response2
+
   }
 
   def githubCallForContent(user: String, repo: String, branch: String, filePath: String, linesArr: Array[String], dedent:Int): Future[String] = {
-    val contents: Future[HttpResponse] = getGithubContent(user, repo, branch, filePath)
 
-    val res2 = contents.map(x1 => {
-      val sb = new StringBuilder("")
-      val res3 = x1.entity.data.asString.parseJson.asJsObject.fields.foldLeft(sb) { case (lis, v) =>
+    getGithubContent(user, repo, branch, filePath).map(x1 => {
+      val res3 = x1.entity.data.asString.parseJson.asJsObject.fields.foldLeft(new StringBuilder("")) { case (lis, v) =>
         if (v._1.equals("content")) {
           val s1 = v._2.compactPrint.replace("\\n", " ")
           val s = new Predef.String(Base64.decodeBase64(s1), "UTF-8")
@@ -61,25 +56,24 @@ trait LiteralIncludeService extends HttpService {
             case 1 =>  io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
             case _ =>  io.Source.fromFile("store.txt").getLines()
           }
-          lis.append(iteratorStr.map(x => if(x.length>= dedent) x.substring(dedent)).mkString("\n"))
+          lis.append(iteratorStr.map(x => {
+            if(x.length>= dedent) x.substring(dedent)
+            else ""
+          }).mkString("\n"))
         }else {lis.append("")}
       }
-      if(sb.length == 0)
-        sb.append("Please enter a valid Url in the form /github/code/:user/:repo/:branch/path?lines=#L1-#L2&dedent=#Num")
-      sb.mkString
+      if(res3.length == 0)
+        res3.append("Please enter a valid Url in the form /github/code/:user/:repo/:branch/path?lines=#L1-#L2&dedent=#Num")
+      res3.mkString
     })
-    res2
-
   }
 
 
   def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
     implicit val actor = ActorSystem("githubCallForContent")
     implicit val timeout = Timeout(15.seconds)
-    val contents = {
-      (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath+"?ref="+branch)).mapTo[HttpResponse]
-    }
-    contents
+    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath+"?ref="+branch)).mapTo[HttpResponse]
+
   }
 
 
@@ -105,6 +99,8 @@ trait LiteralIncludeService extends HttpService {
               onComplete(githubCall(user, repo, "commits")) {
                 case Success(value) =>
                   complete(value)
+                case Failure(value) =>
+                  complete(s"Failed to retrieve commits, with error $value")
               }
             }
           }
@@ -128,6 +124,8 @@ trait LiteralIncludeService extends HttpService {
               onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr,dedent.toInt)) {
                 case Success(value) =>
                   complete(value)
+                case Failure(value) =>
+                  complete(s"Failed to retrieve content, with error $value")
               }
             } else {
               complete("Illegal line selection, enter in the format L1-L2")
@@ -143,6 +141,8 @@ trait LiteralIncludeService extends HttpService {
           onComplete(githubCallForContent(user, repo, branch, path.toString, Array.empty,0)) {
             case Success(value) =>
               complete(value)
+            case Failure(value) =>
+              complete(s"Failed to retrieve content, with error $value")
           }
         }
       }

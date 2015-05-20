@@ -20,13 +20,15 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util._
 
-trait LiteralIncludeService extends HttpService {
+trait LiteralIncludeService extends HttpService with Actor {
+  def actorRefFactory = context
 
+  def receive = runRoute(myRoute)
 
   import spray.httpx.RequestBuilding._
 
   def githubCall(user: String, repo: String, responseType: String): Future[HttpResponse] = {
-    implicit val actor = ActorSystem("githubCall")
+    implicit val actor = context.system//ActorSystem("githubCall")
     implicit val timeout = Timeout(5.seconds)
     (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/" + responseType)).mapTo[HttpResponse]
 
@@ -70,7 +72,7 @@ trait LiteralIncludeService extends HttpService {
 
 
   def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
-    implicit val actor = ActorSystem("githubCallForContent")
+    implicit val actor = context.system//ActorSystem("githubCallForContent")
     implicit val timeout = Timeout(15.seconds)
     (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath+"?ref="+branch)).mapTo[HttpResponse]
 
@@ -151,14 +153,7 @@ trait LiteralIncludeService extends HttpService {
 }
 
 
-class MyServiceActor extends Actor with LiteralIncludeService {
-  //import context.dispatcher
-  // the HttpService trait defines only one abstract member, which
-  // connects the services environment to the enclosing actor or test
-  def actorRefFactory = context
+class MyServiceActor extends LiteralIncludeService {
 
-  // this actor only runs our route, but you could add
-  // other things here, like request stream processing
-  // or timeout handling
-  def receive = runRoute(myRoute)
+
 }

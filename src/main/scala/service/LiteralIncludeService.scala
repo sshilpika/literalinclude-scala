@@ -22,6 +22,18 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util._
 
+case class Options(lines: String, dedent: Int){
+  val linesArr = lines.split("-")
+  require(!lines.isEmpty, "lines parameter must not be empty")
+  require(linesArr.length > 0 , "lines parameter should be of the form L1-L2, where either L2 and L1 are optional")
+  require(linesArr(0).forall(_.isDigit) , "line values should be integers")
+  if(linesArr.length ==2) {
+      require(linesArr(1).forall(_.isDigit) , "line values should be integers")
+   }
+  require(0 <= dedent, "dedent has to be positive")
+
+}
+
 trait LiteralIncludeService extends HttpService with Actor {
   val myRoute =
     pathEndOrSingleSlash {
@@ -68,35 +80,14 @@ trait LiteralIncludeService extends HttpService with Actor {
       path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
         get {
           respondWithMediaType(`text/plain`) {
-            parameters('lines ? "1", 'dedent ? "0") { (lines, dedent) =>
-              val linesArr = lines.split("-")
-              if (linesArr.length > 0 && !dedent.isEmpty && !lines.isEmpty) {
-
-                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, dedent.toInt)) {
-                  case Success(value) =>
-                    complete(value)
-                  case Failure(value) =>
-                    complete(s"Failed to retrieve content, with error $value")
-                }
-
-              } else {
-
-                complete("Illegal parameter entry, enter lines in the format L1-L2 and integers for dedent")
-
+            parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
+              val linesArr = options.lines.split("-")
+              onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
+                case Success(value) =>
+                  complete(value)
+                case Failure(value) =>
+                  complete(s"Failed to retrieve content, with error $value")
               }
-            }
-          }
-        }
-      }
-      } ~ // without lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ RestPath) { (user, repo, branch, path) => {
-        get {
-          respondWithMediaType(`text/plain`) {
-            onComplete(githubCallForContent(user, repo, branch, path.toString, Array.empty, 0)) {
-              case Success(value) =>
-                complete(value)
-              case Failure(value) =>
-                complete(s"Failed to retrieve code content, with error $value")
             }
           }
         }

@@ -34,7 +34,7 @@ case class Options(lines: String, dedent: Int){
 
 }
 
-trait LiteralIncludeService extends HttpService with Actor {
+trait LiteralIncludeService extends HttpServiceActor {
   val myRoute =
     pathEndOrSingleSlash {
       respondWithMediaType(`text/html`) {
@@ -94,7 +94,7 @@ trait LiteralIncludeService extends HttpService with Actor {
       }
       }
 
-  def actorRefFactory = context
+  //override def actorRefFactory = context
 
   import spray.httpx.RequestBuilding._
 

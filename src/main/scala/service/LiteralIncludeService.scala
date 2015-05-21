@@ -22,7 +22,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util._
 
-case class Options(lines: String, dedent: Int){
+case class Options(lines: String,  dedent: Int){
   val linesArr = lines.split("-")
   require(!lines.isEmpty, "lines parameter must not be empty")
   require(linesArr.length > 0 , "lines parameter should be of the form L1-L2, where either L2 and L1 are optional")
@@ -34,7 +34,15 @@ case class Options(lines: String, dedent: Int){
 
 }
 
+case class JsonPResult(finalLines: String)
+
+object JsonPResultProtocol {
+  import spray.json.DefaultJsonProtocol._
+  implicit val gitResult = jsonFormat(JsonPResult,"fileContent")
+}
+
 trait LiteralIncludeService extends HttpServiceActor {
+
   val myRoute =
     pathEndOrSingleSlash {
       respondWithMediaType(`text/html`) {
@@ -76,7 +84,26 @@ trait LiteralIncludeService extends HttpServiceActor {
           }
 
         }
-      } ~ // with lines and dedent
+      } ~ // jsonp with lines and dedent
+      path("github" ~ Slash ~ "code" ~ Slash ~ "jsonp" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
+        get {
+          jsonpWithParameter("jsonp") {
+            import JsonPResultProtocol._
+            import spray.httpx.SprayJsonSupport._
+
+            parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
+              val linesArr = options.lines.split("-")
+              onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
+                case Success(value) =>
+                  complete(JsonPResult(value))
+                case Failure(value) =>
+                  complete(JsonPResult(s"Failed to retrieve content, with error $value"))
+              }
+            }
+          }
+        }
+      }
+      }~ // with lines and dedent
       path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
         get {
           respondWithMediaType(`text/plain`) {
@@ -93,8 +120,6 @@ trait LiteralIncludeService extends HttpServiceActor {
         }
       }
       }
-
-  //override def actorRefFactory = context
 
   import spray.httpx.RequestBuilding._
 

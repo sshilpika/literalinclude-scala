@@ -109,27 +109,7 @@ trait LiteralIncludeService extends HttpServiceActor {
           }
         }
       }
-      }/*~ // with lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
-        get {
-          headerValueByName("Content-Type"){contentType =>
-
-          respondWithMediaType(`text/plain`) {
-            parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
-              val linesArr = options.lines.split("-")
-              onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
-                case Success(value) =>
-                 complete(value)
-
-                case Failure(value) =>
-                  complete(s"Failed to retrieve content, with error $value")
-              }
-            }
-            }
-          }
-        }
       }
-      }*/
 
   import spray.httpx.RequestBuilding._
 

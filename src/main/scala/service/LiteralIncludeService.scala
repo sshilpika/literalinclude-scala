@@ -4,6 +4,10 @@ package luc.literalinclude.service
  * Created by sshilpika on 3/8/15.
  */
 
+/*Stream for pagination
+detach in routing to make blocking code execute in the future
+file getFromFile - for store.txt*/
+
 import java.io._
 
 import akka.actor._
@@ -85,45 +89,51 @@ trait LiteralIncludeService extends HttpServiceActor {
 
         }
       } ~ // jsonp with lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ "jsonp" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
+      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
         get {
-          jsonpWithParameter("jsonp") {
-            import JsonPResultProtocol._
-            import spray.httpx.SprayJsonSupport._
-
-            parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
-              val linesArr = options.lines.split("-")
-              onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
-                case Success(value) =>
-                  complete(JsonPResult(value))
-                case Failure(value) =>
-                  complete(JsonPResult(s"Failed to retrieve content, with error $value"))
+          headerValueByName("Content-Type"){contentType =>
+            jsonpWithParameter("jsonp") {
+              import JsonPResultProtocol._
+              import spray.httpx.SprayJsonSupport._
+              parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
+                val linesArr = options.lines.split("-")
+                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
+                  case Success(value) =>
+                    complete(if(contentType.equals("jsonp")) JsonPResult(value) else value)
+                  case Failure(value) =>
+                    complete(if(contentType.equals("jsonp")) JsonPResult(s"Failed to retrieve content, with error $value") else s"Failed to retrieve content, with error $value")
+                   // complete(JsonPResult(s"Failed to retrieve content, with error $value"))
+                }
               }
             }
           }
         }
       }
-      }~ // with lines and dedent
+      }/*~ // with lines and dedent
       path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
         get {
+          headerValueByName("Content-Type"){contentType =>
+
           respondWithMediaType(`text/plain`) {
             parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
               val linesArr = options.lines.split("-")
               onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
                 case Success(value) =>
-                  complete(value)
+                 complete(value)
+
                 case Failure(value) =>
                   complete(s"Failed to retrieve content, with error $value")
               }
             }
+            }
           }
         }
       }
-      }
+      }*/
 
   import spray.httpx.RequestBuilding._
 
-  def receive = runRoute(myRoute)
+
 
   def githubCall(user: String, repo: String, responseType: String): Future[HttpResponse] = {
     implicit val actor = context.system //ActorSystem("githubCall")
@@ -194,5 +204,6 @@ trait LiteralIncludeService extends HttpServiceActor {
 
 class MyServiceActor extends LiteralIncludeService {
 
+  def receive = runRoute(myRoute)
 
 }

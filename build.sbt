@@ -7,6 +7,9 @@ version := "0.2"
 scalaVersion := "2.11.6"
 
 resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+resolvers += "spray repo" at "http://repo.spray.io"
+resolvers += "spray nightlies repo" at "http://nightlies.spray.io"
+
 
 libraryDependencies ++= {
   val akkaV = "2.3.6"

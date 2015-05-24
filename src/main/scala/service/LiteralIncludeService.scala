@@ -45,7 +45,7 @@ object JsonPResultProtocol {
   implicit val gitResult = jsonFormat(JsonPResult,"fileContent")
 }
 
-trait LiteralIncludeService extends HttpServiceActor {
+trait LiteralIncludeService extends HttpService with LiteralGitServiceHandler {
 
   val myRoute =
     pathEndOrSingleSlash {
@@ -102,7 +102,6 @@ trait LiteralIncludeService extends HttpServiceActor {
                     complete(if(contentType.equals("jsonp")) JsonPResult(value) else value)
                   case Failure(value) =>
                     complete(if(contentType.equals("jsonp")) JsonPResult(s"Failed to retrieve content, with error $value") else s"Failed to retrieve content, with error $value")
-                   // complete(JsonPResult(s"Failed to retrieve content, with error $value"))
                 }
               }
             }
@@ -111,9 +110,24 @@ trait LiteralIncludeService extends HttpServiceActor {
       }
       }
 
+
+  }
+
+
+
+trait LiteralGitServiceHandler extends Actor{
+
   import spray.httpx.RequestBuilding._
 
+  //def actorRefFactory = context
 
+  def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
+
+    implicit val actor = context.system
+    implicit val timeout = Timeout(15.seconds)
+    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch)).mapTo[HttpResponse]
+
+  }
 
   def githubCall(user: String, repo: String, responseType: String): Future[HttpResponse] = {
     implicit val actor = context.system //ActorSystem("githubCall")
@@ -170,19 +184,17 @@ trait LiteralIncludeService extends HttpServiceActor {
 
       res3.mkString
     })
-  }
-
-  def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
-
-    implicit val actor = context.system
-    implicit val timeout = Timeout(15.seconds)
-    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch)).mapTo[HttpResponse]
 
   }
 }
 
 
-class MyServiceActor extends LiteralIncludeService {
+
+
+class MyServiceActor extends LiteralIncludeService{
+
+
+  def actorRefFactory = context
 
   def receive = runRoute(myRoute)
 

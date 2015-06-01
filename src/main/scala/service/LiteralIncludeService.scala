@@ -18,9 +18,9 @@ import org.apache.commons.codec.binary.Base64
 import spray.can.Http
 import spray.http.MediaTypes._
 import spray.http._
+import spray.httpx.RequestBuilding._
 import spray.json._
 import spray.routing._
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -45,95 +45,22 @@ object JsonPResultProtocol {
   implicit val gitResult = jsonFormat(JsonPResult,"fileContent")
 }
 
-trait LiteralIncludeService extends HttpService with LiteralGitServiceHandler {
+trait LiteralIncludeService extends HttpService {
 
-  val myRoute =
-    pathEndOrSingleSlash {
-      respondWithMediaType(`text/html`) {
-        complete {
-          <html>
-            <body>
-              <h3>Welcome to the Awesome Literal Include Service!</h3>
-              <h3>Please enter a valid Url in the form
-                <i>/github/code/:user/:repo/:branch/path?lines=#L1-#L2
-                  &amp;
-                  dedent=#Num</i>
-              </h3>
-              <h4>lines and dedent are optional</h4>
-            </body>
-          </html>
-        }
-      }
-
-    } ~
-      path("commits") {
-        get {
-          respondWithMediaType(`text/plain`) {
-            parameters('user, 'repo) { (user, repo) =>
-              onComplete(githubCall(user, repo, "commits")) {
-                case Success(value) =>
-                  complete(value)
-                case Failure(value) =>
-                  complete(s"Failed to retrieve commits, with error $value")
-              }
-            }
-          }
-        }
-      } ~
-      path("issues") {
-        get {
-          parameters('user, 'repo) { (user, repo) =>
-            redirect("https://api.github.com/repos/" + user + "/" + repo + "/issues", StatusCodes.TemporaryRedirect) //PermanentRedirect)
-            //onComplete(githubCall(user,repo,"issues")) {complete(_)}
-          }
-
-        }
-      } ~ // jsonp with lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
-        get {
-          headerValueByName("Content-Type"){contentType =>
-            jsonpWithParameter("jsonp") {
-              import JsonPResultProtocol._
-              import spray.httpx.SprayJsonSupport._
-              parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
-                val linesArr = options.lines.split("-")
-                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
-                  case Success(value) =>
-                    complete(if(contentType.equals("jsonp")) JsonPResult(value) else value)
-                  case Failure(value) =>
-                    complete(if(contentType.equals("jsonp")) JsonPResult(s"Failed to retrieve content, with error $value") else s"Failed to retrieve content, with error $value")
-                }
-              }
-            }
-          }
-        }
-      }
-      }
-
-
-  }
-
-
-
-trait LiteralGitServiceHandler extends Actor{
-
-  import spray.httpx.RequestBuilding._
-
-  //def actorRefFactory = context
 
   def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
 
-    implicit val actor = context.system
+    implicit val actor = Option(Boot.system).getOrElse(ActorSystem("literalinclude"))
     implicit val timeout = Timeout(15.seconds)
     (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch)).mapTo[HttpResponse]
 
   }
 
   def githubCall(user: String, repo: String, responseType: String): Future[HttpResponse] = {
-    implicit val actor = context.system //ActorSystem("githubCall")
+
+    implicit val actor = Option(Boot.system).getOrElse(ActorSystem("literalinclude"))
     implicit val timeout = Timeout(5.seconds)
     (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/" + responseType)).mapTo[HttpResponse]
-
 
   }
 
@@ -145,7 +72,7 @@ trait LiteralGitServiceHandler extends Actor{
         if (v._1.equals("content")) {
 
           val s1 = v._2.compactPrint.replace("\\n", " ")
-          val s = new Predef.String(Base64.decodeBase64(s1), "UTF-8")
+          val s = new String(Base64.decodeBase64(s1), "UTF-8")
           val writer = new PrintWriter(new File("store.txt"))
           writer.write(s)
           writer.close()
@@ -181,17 +108,80 @@ trait LiteralGitServiceHandler extends Actor{
 
       if (res3.length == 0)
         res3.append("Please enter a valid Url in the form /github/code/:user/:repo/:branch/path?lines=#L1-#L2&dedent=#Num")
-
-      res3.mkString
+      new File("store.txt").delete()
+      Base64.encodeBase64String(String.valueOf(res3).getBytes())
     })
 
   }
-}
 
 
+  val myRoute =
+    pathEndOrSingleSlash {
+      respondWithMediaType(`text/html`) {
+        complete {
+          <html>
+            <body>
+              <h3>Welcome to the Awesome Literal Include Service!</h3>
+              <h3>Please enter a valid Url in the form
+                <i>/github/code/:user/:repo/:branch/path?lines=#L1-#L2
+                  &amp;
+                  dedent=#Num</i>
+              </h3>
+              <h4>lines and dedent are optional</h4>
+            </body>
+          </html>
+        }
+      }
+
+    } ~ path("commits") {
+      get {
+        respondWithMediaType(`text/plain`) {
+          parameters('user, 'repo) { (user, repo) =>
+            onComplete(githubCall(user, repo, "commits")) {
+              case Success(value) =>
+                complete(value)
+              case Failure(value) =>
+                complete(s"Failed to retrieve commits, with error $value")
+            }
+          }
+        }
+      }
+    } ~
+      path("issues") {
+        get {
+          parameters('user, 'repo) { (user, repo) =>
+            redirect("https://api.github.com/repos/" + user + "/" + repo + "/issues", StatusCodes.TemporaryRedirect) //PermanentRedirect)
+            //onComplete(githubCall(user,repo,"issues")) {complete(_)}
+          }
+
+        }
+      } ~ // jsonp with lines and dedent
+      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
+        get {
+          headerValueByName("Content-Type") { contentType =>
+            jsonpWithParameter("jsonp") {
+              import JsonPResultProtocol._
+              import spray.httpx.SprayJsonSupport._
+              parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
+                val linesArr = options.lines.split("-")
+                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
+                  case Success(value) =>
+                    complete(if (contentType.equals("jsonp")) JsonPResult(value) else value)
+                  case Failure(value) =>
+                    complete(if (contentType.equals("jsonp")) JsonPResult(s"Failed to retrieve content, with error $value") else s"Failed to retrieve content, with error $value")
+                }
+              }
+            }
+          }
+        }
+      }
+      }
 
 
-class MyServiceActor extends LiteralIncludeService{
+  }
+
+
+class MyServiceActor extends LiteralIncludeService with Actor{
 
 
   def actorRefFactory = context

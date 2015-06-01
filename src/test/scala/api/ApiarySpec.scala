@@ -13,9 +13,9 @@ import dispatch._
   val serviceRoot = host("private-d6d49-literalincludescala.apiary-mock.com")
 }*/
 
-class LocalSpec extends HttpSpec {
+/*class LocalSpec extends HttpSpec {
   val serviceRoot = host("localhost",8080)
-}
+}*/
 
 class HerokuAppSpec extends HttpSpec{
   val serviceRoot = host("literalinclude.herokuapp.com")

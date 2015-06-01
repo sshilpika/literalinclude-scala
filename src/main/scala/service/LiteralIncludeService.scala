@@ -33,6 +33,7 @@ case class Options(lines: String,  dedent: Int){
   require(linesArr(0).forall(_.isDigit) , "line values should be integers")
   if(linesArr.length ==2) {
       require(linesArr(1).forall(_.isDigit) , "line values should be integers")
+      require(linesArr(0).toInt < linesArr(1).toInt, "Line arguments L1 should be greater than L2")
    }
   require(0 <= dedent, "dedent has to be positive")
 
@@ -82,14 +83,9 @@ trait LiteralIncludeService extends HttpService {
               if (linesArr(0).isEmpty)
                 io.Source.fromFile("store.txt").getLines().take(linesArr(1).toInt)
 
-              else {
+              else
+                io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt - 1, linesArr(1).toInt)
 
-                if (linesArr(0).toInt < linesArr(1).toInt)
-                  io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt - 1, linesArr(1).toInt)
-                else
-                  Iterator("Line arguments L1 should be greater than L2")
-
-              }
             case 1 => io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
             case _ => io.Source.fromFile("store.txt").getLines()
           }

@@ -7,3 +7,4 @@ deploy:
   app: literalinclude
   on:
     repo: sshilpika/literalinclude-scala
+script: sbt coveralls

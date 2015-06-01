@@ -37,7 +37,7 @@ trait HttpSpec extends Specification with JsonMatchers{
   val dedent1 = "PPP"
   val dedent2 = -2
   val lines4 = "aaa"
-
+  val lines5 = "10-3"
 
   "The literal include service, on call to file," should {
     "return the entire file content, with empty parameter list, Content-Type = jsonp" in {
@@ -150,6 +150,18 @@ trait HttpSpec extends Specification with JsonMatchers{
       val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("lines" -> "")
       val response = Http(request.setHeader("Content-Type","text/plain").GET)
       response().getResponseBody === "requirement failed: lines parameter must not be empty"
+    }
+    "return error message, with parameter lines = L1 > L2, with Content-Type = text/plain" in {
+
+      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("lines" -> lines5)
+      val response = Http(request.setHeader("Content-Type","text/plain").GET)
+      response().getResponseBody === "requirement failed: Line arguments L1 should be greater than L2"
+    }
+    "return error message, with parameter lines = L1 > L2, with Content-Type = jsonp" in {
+
+      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("lines" -> lines5)
+      val response = Http(request.setHeader("Content-Type","jsonp").GET)
+      response().getResponseBody === "requirement failed: Line arguments L1 should be greater than L2"
     }
     "return the entire range of lines in file, with parameter dedent = String, Content-Type = jsonp" in {
 

@@ -37,7 +37,7 @@ libraryDependencies ++= Seq(
   "org.mindrot" % "jbcrypt" % "0.3m"
 )
 
-ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """.*\.service\.Boot"""
+ScoverageSbtPlugin.ScoverageKeys.coverageExcludedPackages := """.*\.service\.Boot;.*\.service\.MyServiceActor;.*\.package"""
 
 // IntelliJ Scala plugin reports false positive error here
 enablePlugins(JavaAppPackaging)

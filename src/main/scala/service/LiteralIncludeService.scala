@@ -33,6 +33,7 @@ case class Options(lines: String,  dedent: Int){
   require(linesArr(0).forall(_.isDigit) , "line values should be integers")
   if(linesArr.length ==2) {
       require(linesArr(1).forall(_.isDigit) , "line values should be integers")
+    if(!linesArr(0).isEmpty && linesArr(0).forall(_.isDigit))
       require(linesArr(0).toInt < linesArr(1).toInt, "Line arguments L1 should be greater than L2")
    }
   require(0 <= dedent, "dedent has to be positive")

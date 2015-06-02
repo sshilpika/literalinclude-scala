@@ -1,3 +1,4 @@
+package luc.literalinclude.service
 package directive
 
 /**
@@ -5,7 +6,7 @@ package directive
  */
 
 
-import luc.literalinclude.service.LiteralIncludeService
+
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 

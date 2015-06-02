@@ -1,10 +1,14 @@
 language: scala
 scala: 2.11.5
+env:
+  global:
+  - PKG=luc.literalinclude.service
+script: sbt coverage "testOnly $PKG.api.HerokuSprayHttpSpec $PKG.directive.ParamHeaderDirectiveSpec"
+after_success: sbt coveralls
 deploy:
   provider: heroku
   api_key:
     secure: ngZwkVOpzUax4963sMy81Z9AVUmWQUGhr7yagcadvGb9yHrCw4MPv3U35e5saiIGqVa0oK4PbsTt8aHfNz4dgEsu6V5LinuWR5DaLh26b5RLpmAxUfGvAzg3YeRvZbIRTfDYAyxsSAQ1iu/m9UC+8hZ1bqu74RsX9HIrA9Yza5SH6HJ39GBvnLh7QAqaKwnYF5gSa0TPWflDXpISdi7EAelbCVOIr9SS8BfNs7AVCNJM0SbkHwH36DVE/G8NEI4aOI+cPMra4WIFQogtSQeJnIOQnIMgb/lT7vK2hGGe8I1IYkrmoUKpNJgwQLajvWCVR5Sgi56ewYcBj3FM5cCvqcKnhSy0rmEpqeacYxPScTE4mO1krvOe+L5aJtD7jGwu+XdFYCNJ8Hp+4nSF1uk+1Z01vLVD0ut5pdHwlurzeDeejl9d0EM9KDkPqgUCyTNDtNEBUrp6fIR8b4Dj57VdAG6UtsuWJzTtIsPc39EjJXRdLNT5xI3b9JBJiYmkOTRJxoQOz+iDF30FqET4Eb3KoyxR7sG8aNyxuH6eygfDQ9qZzvE8ClFevpViDvNPmhv9NCQaq1lB9xh0i6IVTLDV3QvxmajfNgygZ45MX4z7LxCxG5Pr77VKYbonQSFTojMz+bf0k53mXRzdnIU47DlIG9iqbQAOPmWALuZv5tKYL8I=
   app: literalinclude
   on:
-    repo: sshilpika/literalinclude-scala
-script: sbt coveralls
+    repo: sshilpika/litesralinclude-scala

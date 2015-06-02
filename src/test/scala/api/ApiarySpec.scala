@@ -1,3 +1,4 @@
+package luc.literalinclude.service
 package api
 
 import org.specs2.mutable.Specification
@@ -17,7 +18,7 @@ import dispatch._
   val serviceRoot = host("localhost",8080)
 }*/
 
-class HerokuAppSpec extends HttpSpec{
+class HerokuSprayHttpSpec extends HttpSpec{
   val serviceRoot = host("literalinclude.herokuapp.com")
 }
 
@@ -177,15 +178,15 @@ trait HttpSpec extends Specification with JsonMatchers{
     }
     "return the entire range of lines in file, with parameter dedent = negative, Content-Type = jsonp" in {
 
-      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("dedent" -> dedent1)
+      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("dedent" -> dedent2.toString)
       val response = Http(request.setHeader("Content-Type","jsonp").GET)
-      response().getResponseBody === "The query parameter 'dedent' was malformed:\n'PPP' is not a valid 32-bit integer value"
+      response().getResponseBody === "requirement failed: dedent has to be positive"
     }
     "return the entire range of lines in file, with parameter dedent = negative, with Content-Type = text/plain" in {
 
-      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("dedent" -> dedent1)
+      val request = serviceRoot / "github" / "code" / owner / repo / branch / "src" / "main" / "scala" / "Rational.scala" <<? Map("dedent" -> dedent2.toString)
       val response = Http(request.setHeader("Content-Type","text/plain").GET)
-      response().getResponseBody === "The query parameter 'dedent' was malformed:\n'PPP' is not a valid 32-bit integer value"
+      response().getResponseBody === "requirement failed: dedent has to be positive"
     }
   }
 }

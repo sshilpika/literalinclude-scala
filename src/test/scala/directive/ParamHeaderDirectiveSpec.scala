@@ -4,7 +4,6 @@
 package luc.literalinclude.service
 package directive
 
-import java.lang.Throwable
 import spray.http.HttpHeaders.RawHeader
 import spray.http.{ContentTypes, HttpCharsets, MediaTypes}
 import spray.routing.{Rejection, ValidationRejection, MissingHeaderRejection, MalformedQueryParamRejection}

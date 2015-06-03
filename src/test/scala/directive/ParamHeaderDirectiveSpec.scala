@@ -32,12 +32,7 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         responseAs[String] must contain("issues")
       }
     }
-    "return a header error message for requests without headers specified" in {
 
-      Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala") ~> myRoute ~> check {
-        rejectionConstruct("")
-      }
-    }
     "return a json string for GET requests without parameters" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
@@ -90,6 +85,12 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala?lines=-").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
           val message = "requirement failed: lines parameter should be of the form L1-L2, where either L2 and L1 are optional"
           rejectionConstruct(message)
+        }
+      }
+      "fail with error message for requests without headers specified" in {
+
+        Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala") ~> myRoute ~> check {
+          rejectionConstruct("")
         }
       }
       "fail for GET requests with string values of lines parameter" in {

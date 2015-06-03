@@ -1,4 +1,4 @@
-package luc.literalinclude.scala
+package luc.literalinclude.service
 
 /**
  * Created by sshilpika on 4/6/15.

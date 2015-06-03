@@ -1,4 +1,5 @@
 package luc.literalinclude.service
+//package service
 
 /**
  * Created by sshilpika on 3/8/15.
@@ -9,13 +10,13 @@ detach in routing to make blocking code execute in the future
 file getFromFile - for store.txt*/
 
 import java.io._
-
 import akka.actor._
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import org.apache.commons.codec.binary.Base64
 import spray.can.Http
+import spray.http.HttpHeaders.RawHeader
 import spray.http.MediaTypes._
 import spray.http._
 import spray.httpx.RequestBuilding._
@@ -50,11 +51,12 @@ object JsonPResultProtocol {
 trait LiteralIncludeService extends HttpService {
 
 
-  def getGithubContent(user: String, repo: String, branch: String, filePath: String): Future[HttpResponse] = {
+  def getGithubContent(user: String, repo: String, branch: String, filePath: String, accessToken: Option[String]): Future[HttpResponse] = {
 
     implicit val actor = Option(Boot.system).getOrElse(ActorSystem("literalinclude"))
     implicit val timeout = Timeout(15.seconds)
-    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch)).mapTo[HttpResponse]
+    val rawHeadersList = accessToken.foldLeft(Nil: List[RawHeader])((list, token) => list:+RawHeader("Authorization", "token "+token))
+    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch).withHeaders(rawHeadersList)).mapTo[HttpResponse]
 
   }
 
@@ -66,9 +68,9 @@ trait LiteralIncludeService extends HttpService {
 
   }
 
-  def githubCallForContent(user: String, repo: String, branch: String, filePath: String, linesArr: Array[String], dedent: Int): Future[String] = {
+  def githubCallForContent(user: String, repo: String, branch: String, filePath: String, linesArr: Array[String], dedent: Int, accessToken: Option[String]): Future[String] = {
 
-    getGithubContent(user, repo, branch, filePath).map(x1 => {
+    getGithubContent(user, repo, branch, filePath, accessToken).map(x1 => {
       val res3 = x1.entity.data.asString.parseJson.asJsObject.fields.foldLeft(new StringBuilder("")) { case (lis, v) =>
 
         if (v._1.equals("content")) {
@@ -99,7 +101,18 @@ trait LiteralIncludeService extends HttpService {
 
           }).mkString("\n"))
 
-        } else
+        }else if (v._1.equals("message")){
+
+          val s1 = v._2.compactPrint.replace("\\n", " ")
+          val s = new String(Base64.decodeBase64(s1), "UTF-8")
+
+          val writer = new PrintWriter(new File("store.txt"))
+          writer.write(s)
+          writer.close()
+
+          lis.append(io.Source.fromFile("store.txt").getLines().mkString("\n"))
+
+        }else
           lis.append("")
       }
 
@@ -155,13 +168,13 @@ trait LiteralIncludeService extends HttpService {
       } ~ // jsonp with lines and dedent
       path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
         get {
-          headerValueByName("Content-Type") { contentType =>
+          (headerValueByName("Content-Type") & optionalHeaderValueByName("Authorization")) { (contentType, authToken) =>
             jsonpWithParameter("jsonp") {
               import JsonPResultProtocol._
               import spray.httpx.SprayJsonSupport._
               parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
                 val linesArr = options.lines.split("-")
-                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent)) {
+                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent, authToken)) {
                   case Success(value) =>
                     complete(if (contentType.equals("jsonp")) JsonPResult(value) else value)
                   case Failure(value) =>

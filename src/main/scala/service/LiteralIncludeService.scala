@@ -5,10 +5,6 @@ package luc.literalinclude.service
  * Created by sshilpika on 3/8/15.
  */
 
-/*Stream for pagination
-detach in routing to make blocking code execute in the future
-file getFromFile - for store.txt*/
-
 import java.io._
 import akka.actor._
 import akka.io.IO

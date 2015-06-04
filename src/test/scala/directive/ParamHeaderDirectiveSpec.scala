@@ -55,7 +55,6 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
     "return a json string for GET requests without parameters and Content-Type: text/plain" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "text/plain"))) ~> myRoute ~> check {
-        responseAs[String] must contain("fileContent")
         contentType === ContentTypes.`text/plain`
       }
     }

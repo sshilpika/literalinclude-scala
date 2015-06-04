@@ -86,7 +86,7 @@ trait LiteralIncludeService extends HttpService {
                 io.Source.fromFile("store.txt").getLines().slice(linesArr(0).toInt - 1, linesArr(1).toInt)
 
             case 1 => io.Source.fromFile("store.txt").getLines().drop(linesArr(0).toInt - 1)
-            case _ => io.Source.fromFile("store.txt").getLines()
+            //case _ => io.Source.fromFile("store.txt").getLines()
           }
           lis.append(iteratorStr.map(x => {
 

@@ -26,16 +26,42 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         responseAs[String] must contain("commit")
       }
     }
+    "fail to retrieve commit information for GET requests with malformed url" in {
+
+      Get("/commits?user=django&repo=kjhfdhk") ~> myRoute ~> check {
+        responseAs[String] must contain("\"message\":\"Not Found\"")
+      }
+    }
     "return issues for GET requests with user and repository name" in {
 
       Get("/issues?user=LoyolaChicagCode&repo=scala-tdd-fundamentals") ~> myRoute ~> check {
         responseAs[String] must contain("issues")
       }
     }
+    "return a json string for GET requests with incomplete url" in {
 
+      Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
+        responseAs[String] must contain("Failed to retrieve content, with error spray.json.DeserializationException: JSON object expected")
+        contentType === ContentTypes.`application/json`
+      }
+    }
     "return a json string for GET requests without parameters" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
+        responseAs[String] must contain("fileContent")
+        contentType === ContentTypes.`application/json`
+      }
+    }
+    "return a json string for GET requests without parameters and Content-Type: text/plain" in {
+
+      Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "text/plain"))) ~> myRoute ~> check {
+        responseAs[String] must contain("fileContent")
+        contentType === ContentTypes.`text/plain`
+      }
+    }
+    "return a json string for GET requests with line range L1-L2" in {
+
+      Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala?lines=2-10") ~> addHeader("Content-Type", "jsonp") ~> myRoute ~> check {
         responseAs[String] must contain("fileContent")
         contentType === ContentTypes.`application/json`
       }

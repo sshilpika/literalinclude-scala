@@ -45,6 +45,13 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         contentType === ContentTypes.`application/json`
       }
     }
+    "return a json string for GET requests without parameters and malformed path" in {
+
+      Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational12333").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
+        responseAs[String] must contain("UGxlYXNlIGVudGVyIGEgdmFsaWQgVXJsIGluIHRoZSBmb3JtIC9naXRodWIvY29kZS86dXNlci86cmVwby86YnJhbmNoL3BhdGg/bGluZXM9I0wxLSNMMiZkZWRlbnQ9I051bQ==")
+        contentType === ContentTypes.`application/json`
+      }
+    }
     "return a json string for GET requests without parameters" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {

@@ -41,7 +41,7 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
     "return a json string for GET requests with incomplete url" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
-        responseAs[String] must contain("Failed to retrieve content, with error spray.json.DeserializationException: JSON object expected")
+        responseAs[String] must contain("The requested resource could not be found.")
         contentType === ContentTypes.`application/json`
       }
     }

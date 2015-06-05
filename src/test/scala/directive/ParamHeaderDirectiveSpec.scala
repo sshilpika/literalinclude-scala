@@ -38,13 +38,13 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         responseAs[String] must contain("issues")
       }
     }
-    "return a json string for GET requests with incomplete url" in {
+    /*"return a json string for GET requests with incomplete url" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
         responseAs[String] must contain("The requested resource could not be found.")
         contentType === ContentTypes.`application/json`
       }
-    }
+    }*/
     /*"return a json string for GET requests without parameters and malformed path" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/cb3b7ac188a29812e1811e44f2e676363cd35705999999999").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {

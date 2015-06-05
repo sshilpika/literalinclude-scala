@@ -47,12 +47,12 @@ object JsonPResultProtocol {
 trait LiteralIncludeService extends HttpService {
 
 
-  def getGithubContent(user: String, repo: String, branch: String, filePath: String, accessToken: Option[String]): Future[HttpResponse] = {
+  def getGithubContent(user: String, repo: String, sha: String, accessToken: Option[String]): Future[HttpResponse] = {
 
     implicit val actor = Option(Boot.system).getOrElse(ActorSystem("literalinclude"))
     implicit val timeout = Timeout(15.seconds)
     val rawHeadersList = accessToken.foldLeft(Nil: List[RawHeader])((list, token) => list:+RawHeader("Authorization", "token "+token))
-    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/contents/" + filePath + "?ref=" + branch).withHeaders(rawHeadersList)).mapTo[HttpResponse]
+    (IO(Http) ? Get("https://api.github.com/repos/" + user + "/" + repo + "/git/blobs/" + sha).withHeaders(rawHeadersList)).mapTo[HttpResponse]
 
   }
 
@@ -64,9 +64,9 @@ trait LiteralIncludeService extends HttpService {
 
   }
 
-  def githubCallForContent(user: String, repo: String, branch: String, filePath: String, linesArr: Array[String], dedent: Int, accessToken: Option[String]): Future[String] = {
+  def githubCallForContent(user: String, repo: String, sha: String, linesArr: Array[String], dedent: Int, accessToken: Option[String]): Future[String] = {
 
-    getGithubContent(user, repo, branch, filePath, accessToken).map(x1 => {
+    getGithubContent(user, repo, sha, accessToken).map(x1 => {
       val res3 = x1.entity.data.asString.parseJson.asJsObject.fields.foldLeft(new StringBuilder("")) { case (lis, v) =>
 
         if (v._1.equals("content")) {
@@ -162,7 +162,7 @@ trait LiteralIncludeService extends HttpService {
 
         }
       } ~ // jsonp with lines and dedent
-      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ RestPath) { (user, repo, branch, path) => {
+      path("github" ~ Slash ~ "code" ~ Slash ~ Segment ~ Slash ~ Segment ~ Slash ~ Segment) { (user, repo, sha) => {
         get {
           (headerValueByName("Content-Type") & optionalHeaderValueByName("Authorization")) { (contentType, authToken) =>
             jsonpWithParameter("jsonp") {
@@ -170,7 +170,7 @@ trait LiteralIncludeService extends HttpService {
               import spray.httpx.SprayJsonSupport._
               parameters('lines ? "1", 'dedent.as[Int] ? 0).as(Options) { (options) =>
                 val linesArr = options.lines.split("-")
-                onComplete(githubCallForContent(user, repo, branch, path.toString, linesArr, options.dedent, authToken)) {
+                onComplete(githubCallForContent(user, repo, sha, linesArr, options.dedent, authToken)) {
                   case Success(value) =>
                     complete(if (contentType.equals("jsonp")) JsonPResult(value) else value)
                   case Failure(value) =>

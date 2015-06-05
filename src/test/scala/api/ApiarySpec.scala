@@ -42,7 +42,7 @@ trait HttpSpec extends Specification with JsonMatchers{
   
   val sha = "cb3b7ac188a29812e1811e44f2e676363cd35705"
 
-  "The literal include service, on call to file," should {
+  /*"The literal include service, on call to file," should {
     "return the entire file content, with empty parameter list, Content-Type = jsonp" in {
 
       val request = serviceRoot / "github" / "code" / owner / repo / sha
@@ -190,5 +190,5 @@ trait HttpSpec extends Specification with JsonMatchers{
       val response = Http(request.setHeader("Content-Type","text/plain").GET)
       response().getResponseBody === "requirement failed: dedent has to be positive"
     }
-  }
+  }*/
 }

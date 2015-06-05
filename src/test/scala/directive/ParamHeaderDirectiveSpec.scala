@@ -38,7 +38,7 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         responseAs[String] must contain("issues")
       }
     }
-    "return a json string for GET requests with incomplete url" in {
+    /*"return a json string for GET requests with incomplete url" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {
         responseAs[String] must contain("Failed to retrieve content, with error spray.json.DeserializationException: JSON object expected")
@@ -51,7 +51,7 @@ class ParamHeaderDirectiveSpec extends DirectiveSpec {
         responseAs[String] must contain("UGxlYXNlIGVudGVyIGEgdmFsaWQgVXJsIGluIHRoZSBmb3JtIC9naXRodWIvY29kZS86dXNlci86cmVwby86YnJhbmNoL3BhdGg/bGluZXM9I0wxLSNMMiZkZWRlbnQ9I051bQ==")
         contentType === ContentTypes.`application/json`
       }
-    }
+    }*/
     "return a json string for GET requests without parameters" in {
 
       Get("/github/code/LoyolaChicagoCode/scala-tdd-fundamentals/master/src/main/scala/Rational.scala").withHeaders(List(RawHeader("Content-Type", "jsonp"))) ~> myRoute ~> check {

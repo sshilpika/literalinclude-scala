@@ -108,7 +108,7 @@ trait LiteralIncludeService extends HttpService {
 
           lis.append(io.Source.fromFile("store.txt").getLines().mkString("\n"))
 
-        }else
+        } else
           lis.append("")
       }
 

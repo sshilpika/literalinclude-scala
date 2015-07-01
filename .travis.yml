@@ -12,3 +12,6 @@ deploy:
   app: literalinclude
   on:
     repo: sshilpika/litesralinclude-scala
+notifications:
+  slack:
+    secure: GYClwtX352lmdn6o2Y144U7el9u6qLxx/c8lzpgr9FbRKp0YwG7NY/q5AYTsnOAddMM+0YdAzf01/qJiwJ9swMnfLnWQsJK7pPZE26WzWAqtTfDR5E4lydbg+A32Jyu0RmQgn3ko5nI8T82jDsLAd1ton4kXz2FI04nyBwUckks=

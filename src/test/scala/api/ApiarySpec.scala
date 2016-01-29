@@ -18,7 +18,7 @@ import dispatch._
   val serviceRoot = host("localhost",8080)
 }*/
 
-class HerokuSprayHttpSpec extends HttpSpec{
+/*class HerokuSprayHttpSpec extends HttpSpec{
   val serviceRoot = host("literalinclude.herokuapp.com")
 }
 
@@ -189,4 +189,4 @@ trait HttpSpec extends Specification with JsonMatchers{
       response().getResponseBody === "requirement failed: dedent has to be positive"
     }
   }
-}
+}*/
